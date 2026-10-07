@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>BALD LARP™ — Chrome Dome Simulator</title>
+<style>
+:root{--ink:#1d2433;--paper:#f4ead2;--bg:#141b2b;--red:#e5484d;--teal:#19a2a5;--gold:#f0b429}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--paper);-webkit-user-select:none;user-select:none}
+h1,h2,h3{font-family:Impact,Haettenschweiler,'Arial Black',sans-serif;letter-spacing:.04em;text-transform:uppercase;margin:0}
+header{display:flex;align-items:center;gap:14px;padding:18px 22px 8px;flex-wrap:wrap}
+.pole{width:26px;height:52px;border:3px solid var(--ink);border-radius:8px;background:repeating-linear-gradient(45deg,var(--red) 0 12px,#fff 12px 24px,var(--teal) 24px 36px);background-size:51px 51px;animation:pole 1.1s linear infinite;box-shadow:3px 3px 0 #000;flex:none}
+@keyframes pole{to{background-position:0 51px}}
+.headwrap h1{font-size:clamp(26px,4.5vw,44px);color:#fff;text-shadow:3px 3px 0 var(--red),-2px -2px 0 #000}
+.tag{opacity:.8;font-style:italic;margin-top:2px}
+#soundBtn{margin-left:auto}
+main{display:grid;grid-template-columns:minmax(320px,1fr) 370px;gap:18px;padding:0 22px 22px;max-width:1120px;margin:0 auto}
+@media(max-width:920px){main{grid-template-columns:1fr}}
+.card{background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:14px;box-shadow:7px 7px 0 #000;padding:14px}
+.stage{position:relative}
+#cv{display:block;width:100%;height:auto;border:3px solid var(--ink);border-radius:12px;cursor:none;touch-action:none}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+button{font-family:inherit;font-weight:700;border:3px solid var(--ink);border-radius:10px;background:#fff;color:var(--ink);padding:8px 12px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:transform .06s,box-shadow .06s;font-size:15px}
+button:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+button.tool.active{background:var(--red);color:#fff}
+button.big{background:var(--teal)}
+button.gold{background:var(--gold)}
+.hint{margin:10px 2px 0;font-style:italic;color:#5b5344;min-height:1.4em;font-size:14px}
+.row{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+.row label{font-weight:700;min-width:106px}
+input[type=range]{flex:1;min-width:110px;accent-color:var(--red)}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{width:32px;height:32px;border-radius:50%;border:3px solid var(--ink);cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
+.sw.active{outline:3px solid var(--gold);outline-offset:2px}
+.bar{height:16px;background:#fff;border:2px solid var(--ink);border-radius:9px;overflow:hidden;flex:1;min-width:80px}
+.bar i{display:block;height:100%;width:0;transition:width .25s}
+#baldFill{background:var(--teal)}#shineFill{background:linear-gradient(90deg,#cfe8ff,#fff)}#confFill{background:var(--red)}
+.statval{font-weight:800;min-width:52px;text-align:right}
+.panel .card+.card{margin-top:16px}
+.panel h3{border-bottom:3px solid var(--ink);padding-bottom:4px;font-size:19px;margin-bottom:4px}
+.rank{font-family:Impact,Haettenschweiler,'Arial Black',sans-serif;font-size:21px;color:var(--red);letter-spacing:.03em}
+#feed{list-style:none;margin:6px 0 0;padding:0;max-height:236px;overflow-y:auto;font-size:13.5px}
+#feed li{background:#fff;border:2px solid var(--ink);border-radius:8px;padding:6px 9px;margin-bottom:6px;box-shadow:2px 2px 0 var(--ink);animation:pop .25s}
+#feed li b{margin-right:4px}
+@keyframes pop{from{transform:scale(.9);opacity:0}}
+#flash{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none}
+#flash span{font-family:Impact,Haettenschweiler,'Arial Black',sans-serif;font-size:clamp(30px,7vw,64px);color:#fff;text-shadow:4px 4px 0 var(--red),-2px -2px 0 #000;animation:zoom .8s ease-out forwards}
+@keyframes zoom{from{transform:scale(.3);opacity:0}30%{opacity:1}to{transform:scale(1.15);opacity:0}}
+#intro{position:fixed;inset:0;background:rgba(10,14,24,.9);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+#intro .box{max-width:540px;text-align:center}
+#intro .box p{margin:10px 0}
+#intro .mono{font-family:monospace;text-align:left;margin:8px auto;max-width:360px;background:#fff;border:2px solid var(--ink);border-radius:8px;padding:10px 14px;box-shadow:3px 3px 0 var(--ink)}
+#certWrap{position:fixed;inset:0;background:rgba(10,14,24,.93);display:none;align-items:center;justify-content:center;z-index:60;padding:16px;flex-direction:column;gap:12px}
+#certCv{max-width:min(92vw,560px);width:100%;height:auto;border:4px solid var(--ink);border-radius:8px;box-shadow:8px 8px 0 #000;background:#fff}
+input[type=text]{font-family:inherit;border:3px solid var(--ink);border-radius:8px;padding:6px 8px;flex:1;min-width:0;background:#fff}
+footer{text-align:center;opacity:.6;font-size:12px;padding:8px 14px 16px}
+.small{font-size:12px;opacity:.75}
+</style>
+</head>
+<body>
+<header>
+<div class='pole'></div>
+<div class='headwrap'>
+<h1>Bald LARP™</h1>
+<div class='tag'>Chrome Dome Simulator — see what it is like. Live the smooth life.</div>
+</div>
+<button id='soundBtn' title='Toggle sound'>🔊</button>
+</header>
+<main>
+<section class='card stage'>
+<canvas id='cv' width='540' height='640'></canvas>
+<div id='flash'><span></span></div>
+<div class='toolbar'>
+<button id='toolRazor' class='tool active'>🪒 Razor</button>
+<button id='toolBuff' class='tool'>✨ Buffer</button>
+<label>Size</label>
+<input type='range' id='razorSize' min='14' max='46' value='26' style='max-width:110px'>
+<button id='rogaine'>💊 Rogaine</button>
+<button id='spf'>🧴 SPF 9000</button>
+<button id='certify' class='gold'>📜 Certify me</button>
+</div>
+<div class='hint' id='hint'></div>
+</section>
+<aside class='panel'>
+<div class='card'>
+<h3>Your dome</h3>
+<div class='row'><label>Skin</label><div class='swatches' id='skinSw'></div></div>
+<div class='row'><label>Hair</label><div class='swatches' id='hairSw'></div></div>
+<div class='row'><label>Head width</label><input type='range' id='headWidth' min='80' max='120' value='100'></div>
+<div class='row'><label>Ear size</label><input type='range' id='earSize' min='60' max='150' value='100'></div>
+<div class='row'><label>Brow power</label><input type='range' id='browBush' min='60' max='160' value='100'></div>
+<div class='row'><label>Stubble rate</label><input type='range' id='stubbleRate' min='0' max='5' value='1'></div>
+<div class='row'><label>Name</label><input type='text' id='nameInp' maxlength='28' value='Anonymous Bastard'></div>
+<div class='row'><button id='randBtn'>🎲 Randomize</button></div>
+</div>
+<div class='card'>
+<h3>Stats</h3>
+<div class='row'><label>Baldness</label><div class='bar'><i id='baldFill'></i></div><span class='statval' id='baldPct'>0%</span></div>
+<div class='row'><label>Shine</label><div class='bar'><i id='shineFill'></i></div><span class='statval' id='shinePct'>16%</span></div>
+<div class='row'><label>Confidence</label><div class='bar'><i id='confFill'></i></div><span class='statval' id='confPct'>10%</span></div>
+<div class='row'><label>Rank</label><span class='rank' id='rank'>Fuzzy Recruit</span></div>
+<div class='row'><label>Days bald</label><span class='statval' id='dayNum'>—</span></div>
+</div>
+<div class='card'>
+<h3>The life (events)</h3>
+<ul id='feed'></ul>
+</div>
+</aside>
+</main>
+<footer>No hair was harmed in the making of this LARP. (It was.) · Bald Bastard Council, est. 1997 · Not legally binding — spiritually binding.</footer>
+<div id='intro'><div class='card box'>
+<h2 style='font-size:32px'>Welcome, recruit</h2>
+<p>You have been issued:</p>
+<div class='mono'>one (1) full head of hair<br>one (1) razor, zero (0) mercy<br>unlimited buffing privileges</div>
+<p><b>Your mission:</b> shave it all off, then survive the smooth life — the wind, the glare, the glory. Then certify your legend.</p>
+<button id='startBtn' class='big' style='font-size:22px;padding:12px 26px'>Begin the LARP</button>
+<p class='small'>Sound on recommended — the razor buzz is half the experience.</p>
+</div></div>
+<div id='certWrap'>
+<canvas id='certCv' width='800' height='1000'></canvas>
+<div class='row' style='justify-content:center'>
+<button id='dlBtn' class='big'>⬇ Download certificate</button>
+<button id='closeCert'>✖ Close</button>
+</div>
+</div>
+<script>
+'use strict';
+/* ---------- utils ---------- */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const rand=(a,b)=>a+Math.random()*(b-a);
+const irand=(a,b)=>Math.floor(rand(a,b+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const TAU=Math.PI*2;
+function hexRGB(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function shade(h,amt){const c=hexRGB(h).map(v=>clamp(Math.round(v+amt),0,255));return'rgb('+c[0]+','+c[1]+','+c[2]+')';}
+function rgba(h,a){const c=hexRGB(h);return'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';}
+
+/* ---------- data ---------- */
+const SKINS=[
+ {n:'Porcelain',base:'#f6d7c3',shadow:'#d9a98f'},
+ {n:'Peach',base:'#f0c8a0',shadow:'#c9986b'},
+ {n:'Golden',base:'#dfae7c',shadow:'#b17f4e'},
+ {n:'Tan',base:'#c68e5f',shadow:'#96633a'},
+ {n:'Brown',base:'#9c6844',shadow:'#6f4426'},
+ {n:'Deep',base:'#6d4630',shadow:'#46281a'}];
+const HAIRS=['#241c14','#4a3421','#7a5228','#a8763a','#cfa64f','#8d8f96','#d6d9df','#b0451c'];
+const AMBIENT=[
+ 'You feel the wind. ALL of it. Weather is now a headline event.',
+ 'A pigeon circles, visibly confused. You are neither egg nor statue. You are more.',
+ 'You catch your reflection in a shop window. Damn. Anyway.',
+ 'A hat salesperson spots you from 200 meters. You are prey.',
+ 'You saved $47 on shampoo this year. It all went into premium buffing wax.',
+ 'A toddler points and says “egg”. You nod. The toddler respects this.',
+ 'Your scalp now gets its own forecast: bright with a chance of glare.',
+ 'Someone asks “Nair or genetics?” You smile and say “choice”.',
+ 'You reach for shampoo out of habit. The bottle is gone. You sold it.',
+ 'Group photo: your dome is the light source. Everyone looks great. You take credit.',
+ 'The barbers’ union has declared you a threat to the economy.',
+ 'You can now signal aircraft. Two pilots have already responded.',
+ 'Grandma sends a hat. Then three hats. Grandma is not okay.',
+ 'There are four scalp seasons now. You track them in a journal.',
+ 'A moth mistakes your ear for a porch light. Close call.',
+ 'A colleague asks to check their teeth in your head. You allow it. Once.',
+ 'You feel the first raindrop 0.3 seconds before anyone else. Powers.',
+ 'Someone calls you “chrome dome”. You add it to your list of titles.'];
+const DAYEV={2:'Day 2: the stubble has formed a support group.',
+ 3:'Day 3: you have buffed the dome twice before breakfast.',
+ 5:'Day 5: local news wants an interview about “the glare incident”.',
+ 7:'Day 7: one week. Structural confidence integrity: maximum.',
+ 10:'Day 10: the council is considering you for a stamp.'};
+const THRESH=[
+ {p:15,msg:'First contact. The clippings are already judging you.'},
+ {p:40,msg:'Decent progress. Your barber just felt a disturbance.'},
+ {p:65,msg:'The point of no return was a while ago, FYI.'},
+ {p:85,msg:'Almost there. Your scalp whispers: “freedom”.'},
+ {p:97,msg:'IT IS DONE. THE DOME IS FREE.'}];
+let fired={};
+
+/* ---------- state ---------- */
+const state={skin:1,hair:0,headW:1,earS:1,browB:1,shine:0.16,conf:10,bald:0,day:0,burn:0,spfT:0,
+ stubble:1,baldMode:false,browsGone:false,polished:false,name:'Anonymous Bastard',sound:true,started:false,tool:'razor',razor:26};
+let browWarned=false,burnWarned=false,shinyWarned=false;
+
+/* ---------- canvases ---------- */
+const W=540,H=640;
+const cv=$('#cv'),ctx=cv.getContext('2d');
+const hairCv=document.createElement('canvas');hairCv.width=W;hairCv.height=H;
+const hctx=hairCv.getContext('2d',{willReadFrequently:true});
+
+/* ---------- geometry ---------- */
+function geo(){const hw=150*state.headW,jaw=104*state.headW;return{cx:W/2,top:120,chin:556,hw:hw,jaw:jaw,earY:356};}
+function headP2(){const g=geo(),cx=g.cx,top=g.top,chin=g.chin,hw=g.hw,jaw=g.jaw;const p=new Path2D();
+ p.moveTo(cx-hw,302);
+ p.bezierCurveTo(cx-hw-6,196,cx-hw*0.66,top,cx,top);
+ p.bezierCurveTo(cx+hw*0.66,top,cx+hw+6,196,cx+hw,302);
+ p.bezierCurveTo(cx+hw+4,374,cx+jaw+16,424,cx+jaw-4,470);
+ p.bezierCurveTo(cx+jaw-14,522,cx+48,chin,cx,chin);
+ p.bezierCurveTo(cx-48,chin,cx-jaw+14,522,cx-jaw+4,470);
+ p.bezierCurveTo(cx-jaw-16,424,cx-hw-4,374,cx-hw,302);
+ p.closePath();return p;}
+function hairRegion(){const g=geo(),cx=g.cx,top=g.top,hw=g.hw;const p=new Path2D();
+ p.moveTo(cx-hw-8,300);
+ p.bezierCurveTo(cx-hw-14,178,cx-hw*0.62,top-20,cx,top-20);
+ p.bezierCurveTo(cx+hw*0.62,top-20,cx+hw+14,178,cx+hw+8,300);
+ p.bezierCurveTo(cx+hw*0.75,328,cx+hw*0.55,340,cx+hw*0.30,332);
+ p.bezierCurveTo(cx+hw*0.12,326,cx-hw*0.12,326,cx-hw*0.30,332);
+ p.bezierCurveTo(cx-hw*0.55,340,cx-hw*0.75,328,cx-hw-8,300);
+ p.closePath();return p;}
+
+/* ---------- baldness grid ---------- */
+const grid={cols:42,rows:20,cells:new Uint8Array(42*20),x0:0,y0:0,cw:1,ch:1,total:42*20};
+function gridSetup(){const g=geo();
+ grid.x0=g.cx-g.hw-10;grid.y0=g.top-18;
+ const x1=g.cx+g.hw+10,y1=318;
+ grid.cw=(x1-grid.x0)/grid.cols;grid.ch=(y1-grid.y0)/grid.rows;}
+function gridReset(){grid.cells.fill(0);state.bald=0;}
+function markGrid(x,y,r){const r2=r*0.85;
+ const c0=clamp(Math.floor((x-r-grid.x0)/grid.cw),0,grid.cols-1);
+ const c1=clamp(Math.floor((x+r-grid.x0)/grid.cw),0,grid.cols-1);
+ const r0=clamp(Math.floor((y-r-grid.y0)/grid.ch),0,grid.rows-1);
+ const r1=clamp(Math.floor((y+r-grid.y0)/grid.ch),0,grid.rows-1);
+ for(let ri=r0;ri<=r1;ri++)for(let ci=c0;ci<=c1;ci++){
+  const px=grid.x0+(ci+0.5)*grid.cw,py=grid.y0+(ri+0.5)*grid.ch;
+  if((px-x)*(px-x)+(py-y)*(py-y)<=r2*r2)grid.cells[ri*grid.cols+ci]=1;}
+ let cnt=0;for(let i=0;i<grid.total;i++)cnt+=grid.cells[i];
+ const before=state.bald;state.bald=cnt/grid.total*100;
+ checkThresholds(before,state.bald);}
+
+/* ---------- hair ---------- */
+function drawBrows(g){const cx=geo().cx;const bc=shade(HAIRS[state.hair],-42);
+ g.lineCap='round';g.strokeStyle=bc;
+ for(let s=-1;s<=1;s+=2){
+  g.lineWidth=6.5*state.browB;
+  g.beginPath();g.moveTo(cx+s*70,320);
+  g.quadraticCurveTo(cx+s*50,312-2*state.browB,cx+s*28,316);g.stroke();}}
+function growHair(){
+ hctx.setTransform(1,0,0,1,0,0);
+ hctx.globalCompositeOperation='source-over';
+ hctx.clearRect(0,0,W,H);
+ const g=geo(),cx=g.cx,top=g.top,hw=g.hw;
+ const base=HAIRS[state.hair];
+ const cols=[shade(base,26),base,shade(base,-34)];
+ const reg=hairRegion();
+ hctx.save();hctx.clip(reg);
+ hctx.fillStyle=base;hctx.fillRect(0,0,W,H);
+ hctx.lineCap='round';
+ let drawn=0,guard=0;
+ while(drawn<340&&guard<5000){guard++;
+  const x=rand(cx-hw-12,cx+hw+12),y=rand(top-18,334);
+  if(!hctx.isPointInPath(reg,x,y))continue;
+  drawn++;
+  const a=Math.atan2(y-(top-8),x-cx)+rand(-0.5,0.5);
+  const len=rand(12,30);
+  const x2=x+Math.cos(a)*len,y2=y+Math.sin(a)*len;
+  const px=x+Math.cos(a+Math.PI/2)*rand(-9,9),py=y+Math.sin(a+Math.PI/2)*rand(-9,9);
+  hctx.strokeStyle=pick(cols);hctx.lineWidth=rand(1.1,2.3);
+  hctx.beginPath();hctx.moveTo(x,y);hctx.quadraticCurveTo(px,py,x2,y2);hctx.stroke();}
+ hctx.restore();
+ for(let s=-1;s<=1;s+=2){for(let i=0;i<14;i++){
+  const x=cx+s*(hw-6+rand(-4,4)),y=rand(298,352);
+  hctx.strokeStyle=pick(cols);hctx.lineWidth=rand(1.2,2.4);
+  hctx.beginPath();hctx.moveTo(x,y);
+  hctx.quadraticCurveTo(x+s*rand(1,4),y+rand(6,14),x+s*rand(-3,3),y+rand(12,22));hctx.stroke();}}
+ for(let i=0;i<14;i++){
+  const x=cx+rand(-hw*0.72,hw*0.72),y0=322+rand(-4,8);
+  hctx.strokeStyle=pick(cols);hctx.lineWidth=rand(2,3.2);
+  hctx.beginPath();hctx.moveTo(x,y0);
+  hctx.quadraticCurveTo(x+rand(-8,8),y0+rand(10,24),x+rand(-16,16),y0+rand(24,56));hctx.stroke();}
+ drawBrows(hctx);
+ state.browsGone=false;browWarned=false;
+ gridReset();}
+function addStubble(n){if(n<=0)return;const g=geo();
+ for(let i=0;i<n;i++){
+  hctx.fillStyle='rgba(28,20,14,0.5)';
+  hctx.beginPath();hctx.arc(g.cx+rand(-g.hw*0.85,g.hw*0.85),g.top+rand(8,300),rand(0.6,1.4),0,TAU);hctx.fill();}}
+
+/* ---------- audio (all synthesized) ---------- */
+let AC=null,master=null,razG=null,nzG=null;
+function audio(){
+ if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}
+  master=AC.createGain();master.gain.value=state.sound?0.9:0;master.connect(AC.destination);
+  razG=AC.createGain();razG.gain.value=0;
+  const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=850;
+  const og=AC.createGain();og.gain.value=0.5;
+  const o1=AC.createOscillator();o1.type='sawtooth';o1.frequency.value=57;
+  const o2=AC.createOscillator();o2.type='sawtooth';o2.frequency.value=61.5;
+  o1.connect(og);o2.connect(og);og.connect(f);f.connect(razG);razG.connect(master);
+  const lfo=AC.createOscillator();lfo.type='square';lfo.frequency.value=26;
+  const lg=AC.createGain();lg.gain.value=0.18;lfo.connect(lg);lg.connect(og.gain);
+  o1.start();o2.start();lfo.start();
+  const buf=AC.createBuffer(1,AC.sampleRate*1.2,AC.sampleRate);
+  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const src=AC.createBufferSource();src.buffer=buf;src.loop=true;
+  const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2800;bp.Q.value=0.9;
+  nzG=AC.createGain();nzG.gain.value=0;
+  src.connect(bp);bp.connect(nzG);nzG.connect(master);src.start();}
+ if(AC.state==='suspended')AC.resume();
+ return AC;}
+function razorOn(on,contact){if(!AC)return;const t=AC.currentTime;
+ razG.gain.setTargetAtTime(on?0.16:0,t,0.03);
+ nzG.gain.setTargetAtTime(on&&contact?0.10:0,t,0.04);}
+function squeak(){if(!AC||!state.sound)return;let tt=AC.currentTime;
+ const n=irand(2,4);
+ for(let i=0;i<n;i++){
+  const o=AC.createOscillator();o.type='sine';
+  const g=AC.createGain();g.gain.value=0;
+  const f0=rand(700,1500);
+  o.frequency.setValueAtTime(f0,tt);
+  o.frequency.exponentialRampToValueAtTime(f0*rand(1.2,1.6),tt+0.09);
+  g.gain.setValueAtTime(0,tt);
+  g.gain.linearRampToValueAtTime(0.13,tt+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,tt+0.12);
+  o.connect(g);g.connect(master);
+  o.start(tt);o.stop(tt+0.15);
+  tt+=rand(0.10,0.2);}}
+function ding(){if(!AC||!state.sound)return;const t=AC.currentTime;
+ [523.25,659.25,783.99,1046.5].forEach(function(fr,i){
+  const o=AC.createOscillator();o.type='triangle';o.frequency.value=fr;
+  const g=AC.createGain();g.gain.value=0;
+  g.gain.setValueAtTime(0,t+i*0.09);
+  g.gain.linearRampToValueAtTime(0.16,t+i*0.09+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+i*0.09+0.5);
+  o.connect(g);g.connect(master);
+  o.start(t+i*0.09);o.stop(t+i*0.09+0.55);});}
+
+/* ---------- events feed ---------- */
+const feed=$('#feed');
+function pushEvent(txt,emo){emo=emo||'💬';
+ const li=document.createElement('li');
+ li.innerHTML='<b>'+emo+'</b>'+txt;
+ feed.prepend(li);
+ while(feed.children.length>26)feed.lastChild.remove();}
+const flashEl=$('#flash'),flashSpan=flashEl.querySelector('span');
+function flash(txt){flashSpan.textContent=txt;flashEl.style.display='flex';
+ flashSpan.style.animation='none';void flashSpan.offsetWidth;flashSpan.style.animation='';
+ setTimeout(function(){flashEl.style.display='none';},900);}
+function checkThresholds(a,b){for(let i=0;i<THRESH.length;i++){const t=THRESH[i];
+ if(!fired[t.p]&&a<t.p&&b>=t.p){fired[t.p]=true;pushEvent(t.msg,'✂️');
+  if(t.p===97)goBald();}}}
+function goBald(){state.baldMode=true;state.day=1;
+ state.conf=clamp(state.conf+25,0,100);
+ flash('BALD ACHIEVED');ding();
+ pushEvent('Welcome to the Order of the Smooth Dome. Day 1 begins.','🥚');}
+function dayEvent(d){
+ if(DAYEV[d])pushEvent(DAYEV[d],'📅');
+ else pushEvent('Day '+d+': still smooth. Still legendary.','📅');}
+
+/* ---------- particles ---------- */
+const parts=[];
+function spawnClips(x,y,r){const col=shade(HAIRS[state.hair],-20);
+ for(let i=0;i<7;i++){const a=rand(0,TAU);
+  parts.push({t:'c',x:x+Math.cos(a)*rand(0,r),y:y+Math.sin(a)*rand(0,r),
+   vx:rand(-40,40),vy:rand(-30,30),rot:rand(0,TAU),vr:rand(-6,6),
+   life:rand(0.7,1.2),len:rand(3,7),col:col});}
+ if(parts.length>350)parts.splice(0,parts.length-350);}
+function spawnSparkles(n){const g=geo();
+ for(let i=0;i<n;i++){const L=rand(0.5,0.9);
+  parts.push({t:'s',x:g.cx+rand(-g.hw*0.8,g.hw*0.8),y:g.top+rand(-6,150),life:L,max:L,rot:rand(0,TAU)});}}
+function updateParts(dt){for(let i=parts.length-1;i>=0;i--){const p=parts[i];
+ p.life-=dt;if(p.life<=0){parts.splice(i,1);continue;}
+ if(p.t==='c'){p.vy+=520*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt;
+  if(p.y>552){p.y=552;p.vy*=-0.25;p.vx*=0.6;}}}}
+function drawParts(g){for(let i=0;i<parts.length;i++){const p=parts[i];
+ if(p.t==='c'){g.save();g.translate(p.x,p.y);g.rotate(p.rot);
+  g.globalAlpha=clamp(p.life*1.5,0,1);g.strokeStyle=p.col;g.lineWidth=1.6;g.lineCap='round';
+  g.beginPath();g.moveTo(-p.len/2,0);g.lineTo(p.len/2,0);g.stroke();g.restore();}
+ else{const k=clamp(p.life/p.max,0,1);const r=4+10*k;
+  g.save();g.translate(p.x,p.y);g.rotate(p.rot+(1-k)*1.5);
+  g.globalAlpha=k;g.strokeStyle='#fff';g.lineWidth=2.2;g.lineCap='round';
+  g.shadowColor='#fff';g.shadowBlur=6;
+  g.beginPath();
+  for(let j=0;j<4;j++){const a=j*Math.PI/2;
+   g.moveTo(Math.cos(a)*1.5,Math.sin(a)*1.5);g.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
+  g.stroke();g.restore();}}
+ g.globalAlpha=1;}
+
+/* ---------- shaving & buffing ---------- */
+let drag=false,last=null,lastBuff=0;
+const mouse={x:-99,y:-99,in:false};
+function toCv(e){const r=cv.getBoundingClientRect();
+ return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
+cv.addEventListener('contextmenu',function(e){e.preventDefault();});
+cv.addEventListener('pointerdown',function(e){if(!state.started)return;
+ e.preventDefault();audio();
+ try{cv.setPointerCapture(e.pointerId);}catch(err){}
+ drag=true;last=toCv(e);mouse.x=last.x;mouse.y=last.y;mouse.in=true;
+ act(last);});
+cv.addEventListener('pointermove',function(e){const p=toCv(e);
+ mouse.x=p.x;mouse.y=p.y;mouse.in=true;
+ if(!drag)return;
+ if(last){const dx=p.x-last.x,dy=p.y-last.y;
+  const dist=Math.hypot(dx,dy);
+  const steps=Math.max(1,Math.floor(dist/(state.razor*0.4)));
+  for(let i=1;i<=steps;i++)act({x:last.x+dx*i/steps,y:last.y+dy*i/steps});}
+ last=p;});
+['pointerup','pointercancel'].forEach(function(ev){cv.addEventListener(ev,function(){drag=false;last=null;razorOn(false,false);});});
+cv.addEventListener('pointerleave',function(){mouse.in=false;});
+document.addEventListener('visibilitychange',function(){if(document.hidden){drag=false;razorOn(false,false);}});
+
+function act(p){if(state.tool==='razor')shaveAt(p.x,p.y);else buffAt(p.x,p.y);}
+function inHead(x,y){return ctx.isPointInPath(headP2(),x,y);}
+function shaveAt(x,y){
+ const r=state.razor;
+ let contact=false;
+ try{contact=hctx.getImageData(clamp(x|0,0,W-1),clamp(y|0,0,H-1),1,1).data[3]>30;}catch(e){}
+ hctx.save();hctx.globalCompositeOperation='destination-out';
+ const g=hctx.createRadialGradient(x,y,r*0.55,x,y,r);
+ g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');
+ hctx.fillStyle=g;
+ hctx.beginPath();hctx.arc(x,y,r,0,TAU);hctx.fill();
+ hctx.restore();
+ markGrid(x,y,r);
+ if(contact)spawnClips(x,y,r);
+ razorOn(true,contact);
+ checkBrows();}
+function checkBrows(){if(state.browsGone)return;const cx=geo().cx;
+ let a=0,b=0;
+ try{a=hctx.getImageData(clamp((cx-49)|0,0,W-1),316,1,1).data[3];
+ b=hctx.getImageData(clamp((cx+49)|0,0,W-1),316,1,1).data[3];}catch(e){return;}
+ if(a<25&&b<25){state.browsGone=true;
+  pushEvent('You took the eyebrows too. The council calls this “total commitment”.','😎');ding();}}
+function buffAt(x,y){if(!inHead(x,y))return;
+ const now=performance.now();
+ state.shine=clamp(state.shine+0.015,0,1);
+ state.conf=clamp(state.conf+0.2,0,100);
+ if(now-lastBuff>650){lastBuff=now;squeak();spawnSparkles(2);}
+ if(!state.polished){state.polished=true;
+  pushEvent('First buff. The head squeaks with purpose.','✨');}}
+
+/* ---------- rendering ---------- */
+let blink=0,blinkT=2.5;
+function drawShine(g){const ge=geo(),cx=ge.cx,top=ge.top;const s=state.shine;
+ if(s<0.03)return;
+ g.save();
+ const hp=headP2();g.clip(hp);
+ const rg=g.createLinearGradient(0,top-10,0,top+120);
+ rg.addColorStop(0,'rgba(255,255,255,'+(0.55*s)+')');
+ rg.addColorStop(1,'rgba(255,255,255,0)');
+ g.strokeStyle=rg;g.lineWidth=8;g.stroke(hp);
+ const g1=g.createRadialGradient(cx-58,top+78,6,cx-58,top+78,95);
+ g1.addColorStop(0,'rgba(255,255,255,'+(0.75*s)+')');
+ g1.addColorStop(0.5,'rgba(255,255,255,'+(0.28*s)+')');
+ g1.addColorStop(1,'rgba(255,255,255,0)');
+ g.fillStyle=g1;g.fillRect(cx-160,top-10,200,190);
+ g.fillStyle='rgba(255,255,255,'+(0.5*s)+')';
+ g.beginPath();g.ellipse(cx-56,top+76,30,16,-0.35,0,TAU);g.fill();
+ g.fillStyle='rgba(255,255,255,'+(0.25*s)+')';
+ g.beginPath();g.ellipse(cx+62,top+96,13,30,0.25,0,TAU);g.fill();
+ if(s>0.85){g.globalAlpha=0.22*(s-0.85)/0.15;
+  g.strokeStyle='#fff';g.lineWidth=3;
+  g.save();g.translate(cx+30,top+40);g.rotate(-0.35);
+  g.strokeRect(-34,-26,30,50);g.strokeRect(4,-26,30,50);
+  g.beginPath();g.moveTo(-4,-26);g.lineTo(-4,24);g.stroke();
+  g.restore();g.globalAlpha=1;}
+ g.restore();}
+function renderCharacter(g){
+ const ge=geo(),cx=ge.cx,top=ge.top,chin=ge.chin,hw=ge.hw,earY=ge.earY;
+ const S=SKINS[state.skin];
+ g.fillStyle=S.shadow;
+ g.beginPath();g.moveTo(cx-56,520);g.lineTo(cx+56,520);g.lineTo(cx+64,640);g.lineTo(cx-64,640);g.closePath();g.fill();
+ g.fillStyle='#1f2c3f';
+ g.beginPath();
+ g.moveTo(-30,640);g.lineTo(70,596);g.lineTo(cx-72,600);
+ g.quadraticCurveTo(cx,646,cx+72,600);
+ g.lineTo(470,596);g.lineTo(570,640);g.closePath();g.fill();
+ g.strokeStyle='#e5484d';g.lineWidth=6;
+ g.beginPath();g.moveTo(cx-72,600);g.quadraticCurveTo(cx,646,cx+72,600);g.stroke();
+ for(let s=-1;s<=1;s+=2){
+  const ex=cx+s*(hw+1),ey=earY;
+  const rx=17*state.earS,ry=27*state.earS;
+  const eg=g.createRadialGradient(ex-rx*0.3,ey-ry*0.3,2,ex,ey,ry*1.4);
+  eg.addColorStop(0,S.base);eg.addColorStop(1,S.shadow);
+  g.fillStyle=eg;
+  g.beginPath();g.ellipse(ex,ey,rx,ry,s*0.12,0,TAU);g.fill();
+  g.strokeStyle='rgba(0,0,0,0.18)';g.lineWidth=2;
+  g.beginPath();g.ellipse(ex,ey,rx*0.55,ry*0.62,s*0.12,0,TAU);g.stroke();}
+ const hp=headP2();
+ g.save();g.clip(hp);
+ const hg=g.createLinearGradient(cx-hw,top,cx+hw*0.5,chin);
+ hg.addColorStop(0,shade(S.base,14));hg.addColorStop(0.55,S.base);hg.addColorStop(1,S.shadow);
+ g.fillStyle=hg;g.fillRect(0,0,W,H);
+ const cw=g.createRadialGradient(cx,chin-90,20,cx,chin-70,190);
+ cw.addColorStop(0,'rgba(0,0,0,0)');cw.addColorStop(1,'rgba(60,20,10,0.14)');
+ g.fillStyle=cw;g.fillRect(0,0,W,H);
+ if(state.burn>0.01){
+  const bg2=g.createRadialGradient(cx,top+70,20,cx,top+80,210);
+  bg2.addColorStop(0,'rgba(255,70,45,'+(0.5*state.burn)+')');
+  bg2.addColorStop(0.55,'rgba(255,70,45,'+(0.25*state.burn)+')');
+  bg2.addColorStop(1,'rgba(255,70,45,0)');
+  g.fillStyle=bg2;g.fillRect(0,0,W,H);}
+ if(state.spfT>0){
+  g.fillStyle='rgba(255,255,255,'+(0.05+0.02*Math.sin(performance.now()/300))+')';
+  g.fillRect(0,0,W,H);}
+ g.restore();
+ const eyY=352,exo=54;
+ const wide=state.browsGone?1.15:1;
+ const bk=blink>0?0.12:1;
+ for(let s=-1;s<=1;s+=2){
+  const ex=cx+s*exo;
+  g.fillStyle='#fff';
+  g.beginPath();g.ellipse(ex,eyY,15,10.5*bk*wide,0,0,TAU);g.fill();
+  if(bk>0.5){
+   g.fillStyle='#4a2e1d';g.beginPath();g.arc(ex,eyY+1,5.2,0,TAU);g.fill();
+   g.fillStyle='#111';g.beginPath();g.arc(ex,eyY+1,2.3,0,TAU);g.fill();
+   g.fillStyle='#fff';g.beginPath();g.arc(ex-1.8,eyY-1.4,1.3,0,TAU);g.fill();}
+  else{g.strokeStyle='rgba(0,0,0,0.35)';g.lineWidth=2;
+   g.beginPath();g.moveTo(ex-12,eyY);g.quadraticCurveTo(ex,eyY+4,ex+12,eyY);g.stroke();}}
+ g.strokeStyle='rgba(0,0,0,0.22)';g.lineWidth=3;g.lineCap='round';
+ g.beginPath();g.moveTo(cx-9,388);g.quadraticCurveTo(cx-15,424,cx-4,428);g.stroke();
+ g.beginPath();g.moveTo(cx+7,428);g.quadraticCurveTo(cx+15,421,cx+12,392);g.stroke();
+ const smile=6+state.conf*0.34;
+ g.strokeStyle=shade(S.shadow,-26);g.lineWidth=6;g.lineCap='round';
+ g.beginPath();g.moveTo(cx-33,472);g.quadraticCurveTo(cx,472+smile,cx+33,472);g.stroke();
+ if(state.conf>70){
+  g.fillStyle='#fff';
+  g.beginPath();g.moveTo(cx-29,474);
+  g.quadraticCurveTo(cx,474+smile*0.92,cx+29,474);
+  g.quadraticCurveTo(cx,486,cx-29,474);g.closePath();g.fill();
+  g.strokeStyle='rgba(0,0,0,0.15)';g.lineWidth=1.5;
+  g.beginPath();g.moveTo(cx,474);g.lineTo(cx,474+smile*0.8);g.stroke();}
+ drawShine(g);
+ g.drawImage(hairCv,0,0);}
+function rr(g,x,y,w,h,r){r=Math.min(r,w/2,h/2);
+ g.beginPath();g.moveTo(x+r,y);
+ g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);
+ g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function drawCursor(g){if(!mouse.in)return;
+ g.save();g.translate(mouse.x,mouse.y);
+ if(state.tool==='razor'){
+  g.rotate(-0.6+Math.sin(performance.now()/28)*0.04);
+  g.fillStyle='#c8cdd6';rr(g,-14,-16,28,13,4);g.fill();
+  g.strokeStyle='#5a6272';g.lineWidth=1.5;
+  for(let i=-10;i<=10;i+=5){g.beginPath();g.moveTo(i,-13);g.lineTo(i,-6);g.stroke();}
+  g.fillStyle='#8a92a3';g.fillRect(-5,-3,10,6);
+  g.fillStyle='#2e3646';rr(g,-8,3,16,30,6);g.fill();
+  g.fillStyle='#e5484d';g.fillRect(-8,10,16,4);
+ }else{
+  g.rotate(0.3);
+  g.fillStyle='#f0b429';rr(g,-18,-10,36,20,8);g.fill();
+  g.fillStyle='rgba(255,255,255,0.85)';rr(g,-13,-6,10,12,4);g.fill();}
+ g.restore();}
+function render(){
+ ctx.clearRect(0,0,W,H);
+ const bg=ctx.createLinearGradient(0,0,0,H);
+ bg.addColorStop(0,'#8fb4d4');bg.addColorStop(0.85,'#7ba3c6');
+ bg.addColorStop(0.85,'#6b5340');bg.addColorStop(1,'#57432f');
+ ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ ctx.globalAlpha=0.05;ctx.fillStyle='#fff';
+ for(let x=0;x<W;x+=44)ctx.fillRect(x,0,18,H*0.85);
+ ctx.globalAlpha=1;
+ renderCharacter(ctx);
+ drawParts(ctx);
+ if(state.started)drawCursor(ctx);}
+
+/* ---------- simulation ---------- */
+let evT=12,dayT=34,stubT=1.2;
+function update(dt){
+ if(!state.started)return;
+ blinkT-=dt;
+ if(blinkT<=0){blinkT=rand(2.2,4.8);blink=0.13;}
+ if(blink>0)blink-=dt;
+ state.shine=clamp(state.shine-0.004*dt,0,1);
+ if(state.baldMode){
+  dayT-=dt;
+  if(dayT<=0){dayT=34;state.day++;dayEvent(state.day);
+   state.conf=clamp(state.conf+5,0,100);}
+  evT-=dt;
+  if(evT<=0){evT=rand(11,19);pushEvent(pick(AMBIENT));
+   state.conf=clamp(state.conf+1.5,0,100);}
+  stubT-=dt;
+  if(stubT<=0){stubT=1.2;addStubble(state.stubble*3);}
+  if(state.spfT>0){state.spfT-=dt;state.burn=clamp(state.burn-0.02*dt,0,1);}
+  else state.burn=clamp(state.burn+0.006*dt*(1+state.shine),0,1);
+  if(state.burn>0.6&&!burnWarn){burnWarn=true;
+   pushEvent('Your scalp is ripening. SPF 9000 exists and you know it.','🧴');}
+  if(state.burn<0.3)burnWarn=false;
+  if(state.shine>0.9&&!shinyWarn){shinyWarn=true;
+   pushEvent('Mirror-tier shine achieved. Local birds are relocating.','🪞');}
+  if(state.shine<0.8)shinyWarn=false;
+  state.conf=clamp(state.conf+(state.burn>0.5?-1.2:0.12)*dt,0,100);}
+ updateParts(dt);}
+
+/* ---------- HUD ---------- */
+function rank(){const score=state.bald*0.45+state.shine*30+state.conf*0.25;
+ if(score<15)return'Fuzzy Recruit';
+ if(score<35)return'Dome Apprentice';
+ if(score<55)return'Chrome Enjoyer';
+ if(score<75)return'Certified Bald Bastard';
+ if(score<90)return'Spectral Beacon';
+ return'Solar Deity of the Break Room';}
+function syncHUD(){
+ $('#baldFill').style.width=state.bald+'%';
+ $('#shineFill').style.width=(state.shine*100)+'%';
+ $('#confFill').style.width=state.conf+'%';
+ $('#baldPct').textContent=Math.round(state.bald)+'%';
+ $('#shinePct').textContent=Math.round(state.shine*100)+'%';
+ $('#confPct').textContent=Math.round(state.conf)+'%';
+ $('#rank').textContent=rank();
+ $('#dayNum').textContent=state.baldMode?state.day:'—';
+ $('#hint').textContent=state.baldMode?
+  (state.burn>0.6?'Your scalp is literally cooking. Consider SPF 9000.':
+   'Live the life: buff the dome, survive the sun, get certified.'):
+  'Drag the razor across the hair. Leave no strand. Show no mercy.';}
+
+/* ---------- UI wiring ---------- */
+const skinEls=[],hairEls=[];
+SKINS.forEach(function(s,i){const d=document.createElement('div');
+ d.className='sw';d.style.background=s.base;d.title=s.n;
+ d.onclick=function(){state.skin=i;refreshSw();};
+ $('#skinSw').appendChild(d);skinEls.push(d);});
+HAIRS.forEach(function(c,i){const d=document.createElement('div');
+ d.className='sw';d.style.background=c;d.title='Hair color';
+ d.onclick=function(){state.hair=i;refreshSw();growHair();
+  if(state.started&&state.bald>5)pushEvent('Hair dye appointment. Complimentary regrow included.','🎨');};
+ $('#hairSw').appendChild(d);hairEls.push(d);});
+function refreshSw(){skinEls.forEach(function(el,i){el.classList.toggle('active',i===state.skin);});
+ hairEls.forEach(function(el,i){el.classList.toggle('active',i===state.hair);});}
+function setTool(t){state.tool=t;
+ $('#toolRazor').classList.toggle('active',t==='razor');
+ $('#toolBuff').classList.toggle('active',t==='buff');
+ razorOn(false,false);}
+$('#toolRazor').onclick=function(){setTool('razor');};
+$('#toolBuff').onclick=function(){setTool('buff');};
+$('#razorSize').oninput=function(e){state.razor=+e.target.value;};
+let regrowTO=null;
+function queueRegrow(){clearTimeout(regrowTO);
+ regrowTO=setTimeout(function(){gridSetup();growHair();},160);}
+$('#headWidth').oninput=function(e){state.headW=+e.target.value/100;
+ if(state.bald<25)queueRegrow();
+ else{gridSetup();if(state.baldMode)state.bald=100;}};
+$('#earSize').oninput=function(e){state.earS=+e.target.value/100;};
+$('#browBush').oninput=function(e){state.browB=+e.target.value/100;
+ if(state.bald<25&&!state.browsGone)queueRegrow();};
+$('#stubbleRate').oninput=function(e){state.stubble=+e.target.value;};
+$('#nameInp').oninput=function(e){state.name=e.target.value||'Anonymous Bastard';};
+$('#rogaine').onclick=function(){growHair();fired={};
+ state.baldMode=false;state.day=0;state.bald=0;
+ pushEvent('Emergency Rogaine deployed. The council will pretend this never happened.','💊');};
+$('#spf').onclick=function(){audio();state.spfT=90;state.burn=0;
+ state.conf=clamp(state.conf+4,0,100);squeak();
+ pushEvent('SPF 9000 applied. You glisten responsibly.','🧴');};
+$('#randBtn').onclick=function(){state.skin=irand(0,SKINS.length-1);
+ state.hair=irand(0,HAIRS.length-1);
+ state.headW=rand(0.86,1.14);state.earS=rand(0.75,1.4);state.browB=rand(0.7,1.5);
+ $('#headWidth').value=Math.round(state.headW*100);
+ $('#earSize').value=Math.round(state.earS*100);
+ $('#browBush').value=Math.round(state.browB*100);
+ refreshSw();gridSetup();growHair();};
+$('#soundBtn').onclick=function(){state.sound=!state.sound;
+ $('#soundBtn').textContent=state.sound?'🔊':'🔇';
+ if(master)master.gain.value=state.sound?0.9:0;};
+$('#startBtn').onclick=function(){state.started=true;
+ $('#intro').style.display='none';audio();ding();
+ pushEvent('Day 0: the last of your hair days. Make them count.','💇');};
+
+/* ---------- certificate ---------- */
+const certWrap=$('#certWrap'),certCv=$('#certCv'),cctx=certCv.getContext('2d');
+function star5(g,x0,y0,r){g.beginPath();
+ for(let i=0;i<5;i++){const a=-Math.PI/2+i*TAU/5;
+  const a2=a+TAU/10;
+  g.lineTo(x0+Math.cos(a)*r,y0+Math.sin(a)*r);
+  g.lineTo(x0+Math.cos(a2)*r*0.45,y0+Math.sin(a2)*r*0.45);}
+ g.closePath();g.fill();}
+function drawCert(){const g=cctx;const cW=800,cH=1000;
+ g.setTransform(1,0,0,1,0,0);
+ g.clearRect(0,0,cW,cH);
+ g.fillStyle='#f4e7c6';g.fillRect(0,0,cW,cH);
+ g.globalAlpha=0.05;g.fillStyle='#5b4a26';
+ for(let i=0;i<650;i++)g.fillRect(rand(0,cW),rand(0,cH),rand(1,3),rand(1,3));
+ g.globalAlpha=1;
+ g.strokeStyle='#3a2c14';g.lineWidth=10;g.strokeRect(18,18,cW-36,cH-36);
+ g.lineWidth=3;g.strokeRect(34,34,cW-68,cH-68);
+ const corners=[[34,34],[cW-34,34],[34,cH-34],[cW-34,cH-34]];
+ for(let i=0;i<4;i++){g.save();g.translate(corners[i][0],corners[i][1]);g.rotate(Math.PI/4);
+  g.fillStyle='#b2312f';g.fillRect(-11,-11,22,22);g.restore();}
+ g.textAlign='center';
+ g.fillStyle='#6b5731';g.font='700 22px Georgia, serif';
+ g.fillText('THE ORDER OF THE SMOOTH DOME',cW/2,92);
+ g.fillStyle='#2c2214';g.font='900 52px Impact, sans-serif';
+ g.fillText('CERTIFICATE OF BALDNESS',cW/2,150);
+ g.strokeStyle='#b2312f';g.lineWidth=4;
+ g.beginPath();g.moveTo(150,170);g.lineTo(cW-150,170);g.stroke();
+ g.fillStyle='#3a2c14';g.font='italic 25px Georgia, serif';
+ g.fillText('This certifies that',cW/2,214);
+ g.fillStyle='#1d1710';g.font='bold 38px Georgia, serif';
+ g.fillText(state.name,cW/2,260);
+ g.fillStyle='#3a2c14';g.font='italic 23px Georgia, serif';
+ g.fillText('has LARPed as a bald person, survived the smooth life,',cW/2,302);
+ g.fillText('and achieved the rank of',cW/2,332);
+ g.fillStyle='#b2312f';g.font='900 42px Impact, sans-serif';
+ g.fillText(rank().toUpperCase(),cW/2,388);
+ g.save();g.translate(cW/2-108,408);g.scale(0.40,0.40);
+ renderCharacter(g);g.restore();
+ const rows=[['Baldness achieved',Math.round(state.bald)+'%'],
+  ['Dome shine',Math.round(state.shine*100)+'%'],
+  ['Confidence',Math.round(state.conf)+'%'],
+  ['Days survived',state.baldMode?state.day:0],
+  ['Bastard score',Math.round(state.bald*0.45+state.shine*30+state.conf*0.25)]];
+ g.font='24px Georgia, serif';
+ let sy=702;
+ for(let i=0;i<rows.length;i++){g.textAlign='left';g.fillStyle='#3a2c14';
+  g.fillText(rows[i][0],170,sy);
+  g.textAlign='right';g.fillStyle='#1d1710';g.font='bold 24px Georgia, serif';
+  g.fillText(String(rows[i][1]),560,sy);
+  g.font='24px Georgia, serif';sy+=34;}
+ g.save();g.translate(400,912);
+ g.fillStyle='#b2312f';
+ g.beginPath();g.moveTo(-14,-20);g.lineTo(-46,10);g.lineTo(-30,26);g.lineTo(-8,0);g.closePath();g.fill();
+ g.beginPath();g.moveTo(14,-20);g.lineTo(46,10);g.lineTo(30,26);g.lineTo(8,0);g.closePath();g.fill();
+ g.beginPath();g.arc(0,0,50,0,TAU);g.fill();
+ g.fillStyle='#f4e7c6';g.beginPath();g.arc(0,0,42,0,TAU);g.fill();
+ g.fillStyle='#b2312f';g.beginPath();g.arc(0,0,35,0,TAU);g.fill();
+ g.fillStyle='#f4e7c6';star5(g,0,0,13);
+ g.font='bold 10px Georgia, serif';g.textAlign='center';
+ g.fillText('BALD BASTARD',0,-22);
+ g.fillText('COUNCIL 1997',0,30);
+ g.restore();
+ g.strokeStyle='#1d1710';g.lineWidth=3;g.lineCap='round';
+ g.beginPath();g.moveTo(600,912);g.quadraticCurveTo(640,887,670,910);
+ g.quadraticCurveTo(700,930,748,894);g.stroke();
+ g.font='italic 18px Georgia, serif';g.fillStyle='#3a2c14';g.textAlign='center';
+ g.fillText('Dr. Chrome — Head of Heads',672,944);
+ const now=new Date();
+ g.textAlign='left';
+ g.fillText('Granted '+now.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}),105,944);
+ g.textAlign='center';g.font='italic 14px Georgia, serif';g.fillStyle='#6b5731';
+ g.fillText('Not legally binding. Spiritually binding.',cW/2,978);}
+$('#certify').onclick=function(){drawCert();certWrap.style.display='flex';ding();};
+$('#closeCert').onclick=function(){certWrap.style.display='none';};
+$('#dlBtn').onclick=function(){const a=document.createElement('a');
+ a.download='certified-bald-bastard.png';
+ a.href=certCv.toDataURL('image/png');a.click();};
+
+/* ---------- boot ---------- */
+let lastT=0,uiT=0;
+function loop(t){const dt=Math.min(0.05,(t-lastT)/1000||0.016);lastT=t;
+ update(dt);render();
+ uiT-=dt;if(uiT<=0){uiT=0.3;syncHUD();}
+ requestAnimationFrame(loop);}
+gridSetup();growHair();refreshSw();syncHUD();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
